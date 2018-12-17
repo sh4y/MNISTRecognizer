@@ -186,3 +186,48 @@ plt.plot(recall_values, precision_values)
 plt.fill_between(np.linspace(0, 1, 1000), -1 * np.linspace(0, 1, 1000) + 1, color='r')
 plt.title('Question 2(l): Explanatory figure\nThe area of this triangle is 0.5 => area of curve >= 0.5')
 plt.show()
+
+print ('\nQuestion 3')
+random_row_indexes = np.random.randint(Xtrain.shape[0], size=36)
+random_x = Xtrain[[random_row_indexes],:][0]
+random_y = Ytrain[random_row_indexes]
+
+print 'Question 3(a)'
+fig, ax = plt.subplots(6,6)
+ax = ax.flatten()
+count = 0
+for row in random_x:
+    number = row.reshape(28,28)
+    ax[count].imshow(number, cmap='Greys', interpolation='nearest')
+    ax[count].axis('off')
+    count += 1
+plt.suptitle('Question 3(a): 36 random MNIST images.')
+plt.show()
+
+print '\nQuestion 3(b)'
+clf = lin.LogisticRegression(multi_class='multinomial', solver='lbfgs')
+clf.fit(Xtrain, Ytrain)
+training_accuracy = 100.0 * clf.score(Xtrain, Ytrain)
+test_accuracy = 100.0 * clf.score(Xtest, Ytest)
+print 'Training accuracy: ' + str(training_accuracy)
+print 'Test accuracy: ' + str(test_accuracy)
+
+print '\nQuestion 3(c)'
+#print 'Training Accuracy    | Test Accuracy     | k value'
+#training_accuracies = np.zeros(20)
+test_accuracies = np.zeros(20)
+for k in range(1, 21):
+    knn_clf = knn.KNeighborsClassifier(n_neighbors=k, algorithm='brute')
+    knn_clf.fit(Xtrain, Ytrain)
+    #knn_train_acc = knn_clf.score(Xtrain, Ytrain)
+    knn_test_acc = knn_clf.score(Xtest, Ytest)
+    #training_accuracies[k-1] = knn_train_acc
+    test_accuracies[k-1] = 100.0 * knn_test_acc
+    #print str(knn_train_acc) + '\t| ' + str(knn_test_acc) + '\t| ' + str(k)
+best_k = np.where(test_accuracies == max(test_accuracies))[0] + 1
+print 'Best K value: ' + str(best_k)
+plt.plot(range(1, 21), test_accuracies)
+plt.title('3(c): KNN test accuracy')
+plt.xlabel('K Value')
+plt.ylabel('Accuracy')
+plt.show()
