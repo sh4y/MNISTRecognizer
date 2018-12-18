@@ -231,3 +231,20 @@ plt.title('3(c): KNN test accuracy')
 plt.xlabel('K Value')
 plt.ylabel('Accuracy')
 plt.show()
+
+print ('\nQuestion 5')
+def softmax1(z):
+    #compute the sum of the exp of the components just once, no need to do it multiple times
+    #compute the softmax function
+    return np.exp(z) / np.sum(np.exp(z))
+
+def softmax2(z):
+    #z = z - np.max(z)
+    y = np.asarray(np.exp(z-np.max(z)) / np.sum(np.exp(z - np.max(z))))
+    logy = np.asarray(z - np.max(z) - np.log(np.sum(np.exp(z - np.max(z)))))
+    return y, logy
+
+print '\nQuestion 5(c)'
+print softmax2((0,0))
+print softmax2((1000,0))
+print softmax2((-1000,0))
