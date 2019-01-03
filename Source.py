@@ -248,3 +248,96 @@ print '\nQuestion 5(c)'
 print softmax2((0,0))
 print softmax2((1000,0))
 print softmax2((-1000,0))
+
+print ('\nQuestion 6')
+print ('\nQuestion 6(a)')
+K = 10
+weights = 0.1 * np.random.randn(Xtrain.shape[1], K)
+#bias_terms = np.reshape(, (Xtrain.shape[0], 1))
+bias_terms = np.zeros(K)
+#weights = np.hstack((bias_terms, weights))
+#weights[:,0] = bias_terms
+#[:,:-1]
+#create arrays, 5000 epochs / 10 epoch cycles = 500 entries
+training_losses = np.zeros(500)
+test_losses = np.zeros(500)
+training_accuracies = np.zeros(500)
+test_accuracies = np.zeros(500)
+#convert Ytrain and Ytest to 1 of K
+t_train = np.zeros((Ytrain.shape[0], K))
+t_train[np.arange(Ytrain.shape[0]), Ytrain] = 1
+t_test = np.zeros((Ytest.shape[0], K))
+t_test[np.arange(Ytest.shape[0]), Ytest] = 1
+
+print ('\nQuestion 6(b)')
+lrate = 1
+for i in range(5000):
+
+    predictions = np.matmul(Xtrain, weights) + bias_terms
+    m = np.max(predictions)
+    y = np.asarray(np.exp(predictions - m) / np.sum(np.exp(predictions - m), axis=1).reshape(Xtrain.shape[0], 1))
+    logy = np.asarray(predictions - m - np.log(np.sum(np.exp(predictions - m), axis=1)).reshape(Xtrain.shape[0], 1))
+    #y.reshape(y.shape[0], 1)
+    #update weights using gradient descent
+    diff = y - t_train
+    derived_loss = np.dot(Xtrain.T, diff) / Xtrain.shape[0]
+    weights -= lrate * derived_loss
+    bias_terms = bias_terms - lrate * np.sum(diff) / Xtrain.shape[0]
+
+    if i % 10 == 0:
+        test_predictions = np.dot(Xtest, weights) + bias_terms
+        m_t = np.max(test_predictions)
+        y_test = np.asarray(np.exp(test_predictions - m_t) / np.sum(np.exp(test_predictions - m_t), axis=1).reshape(Xtest.shape[0], 1))
+        logy_test = np.asarray(test_predictions - m_t - np.log(np.sum(np.exp(test_predictions - m_t), axis=1)).reshape(Xtest.shape[0], 1))
+        indx = int(i/10)
+        #print logy
+        training_accuracy = 100 * np.mean(np.argmax(y, axis=1) == np.argmax(t_train, axis=1))
+        test_accuracy = 100 * np.mean(np.argmax(y_test, axis=1) == np.argmax(t_test, axis=1))
+        training_accuracies[indx] = training_accuracy
+        test_accuracies[indx] = test_accuracy
+
+        #print np.multiply(t_train, logy)
+        #print np.sum(np.multiply(t_train, logy), axis=1)
+        training_error = -1 * np.sum(np.sum(np.multiply(t_train, logy), axis=1)) / Xtrain.shape[0]
+        test_error = -1 * np.sum(np.sum(np.multiply(t_test, logy_test), axis=1)) / Xtest.shape[0]
+        training_losses[indx] = training_error
+        test_losses[indx] = test_error
+
+        print 'i value: ' + str(i)
+        print training_accuracy
+        print test_accuracy
+        print training_losses[indx]
+        print test_losses[indx]
+
+print '\nQuestion 6(d)'
+print 'Learning rate: ' + str(lrate)
+print 'Final Training Loss: ' + str(training_losses[-1])
+print 'Final Test Loss: ' + str(test_losses[-1])
+print 'Final Training Accuracy: ' + str(training_accuracies[-1])
+print 'Final Test Accuracy: ' + str(test_accuracies[-1])
+
+plt.semilogx(np.linspace(0, 5000, 500), training_accuracies, c='orange')
+plt.semilogx(np.linspace(0, 5000, 500), test_accuracies, c='blue')
+plt.xlabel('Epoch')
+plt.title('Question 6(e): training and test accuracy for batch gradient descent.')
+plt.ylabel('Accuracy')
+plt.show()
+
+plt.semilogx(np.linspace(0, 5000, 500), training_losses, c='red')
+plt.semilogx(np.linspace(0, 5000, 500), test_losses, c='blue')
+plt.title('Question 6(f): training and test loss for batch gradient descent.')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.show()
+
+plt.plot(np.linspace(3000, 5000, 200), training_accuracies[-200:])
+plt.title('Question 6(g): training accuracy for last 2000 epochs of bgd')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.show()
+
+plt.plot(np.linspace(3000, 5000, 200), training_losses[-200:])
+plt.title('Question 6(h): training loss for last 2000 epochs of bgd')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.show()
