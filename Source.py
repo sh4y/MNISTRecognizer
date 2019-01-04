@@ -341,3 +341,129 @@ plt.title('Question 6(h): training loss for last 2000 epochs of bgd')
 plt.ylabel('Loss')
 plt.xlabel('Epoch')
 plt.show()
+
+print '\nQuestion 7'
+
+training_losses = np.zeros(500)
+test_losses = np.zeros(500)
+training_accuracies = np.zeros(500)
+test_accuracies = np.zeros(500)
+
+batchSize = 1000
+epochs = 500
+lrate = 1
+
+weights = 0.1 * np.random.randn(Xtrain.shape[1], 10)
+bias_terms = np.zeros(10)
+
+for epoch in range(epochs):
+    print 'Epoch: ' + str(epoch)
+    # shuffle train and test data in order
+    combined_train_dataset = np.hstack((Xtrain, Ytrain.reshape(Ytrain.shape[0], 1)))
+    np.random.shuffle(combined_train_dataset)
+    combined_test_dataset = np.hstack((Xtest, Ytest.reshape(Ytest.shape[0], 1)))
+    np.random.shuffle(combined_test_dataset)
+
+    # break apart the shuffled dataset into their X and Y components
+    shuffledXtrain = combined_train_dataset[:, :-1]
+    shuffledYtrain = combined_train_dataset[:, -1]
+    shuffledXtest = combined_test_dataset[:, :-1]
+    shuffledYtest = combined_test_dataset[:, -1]
+
+    for i in range(Xtrain.shape[0] // batchSize):
+        start_index = i * batchSize
+        end_index = start_index + batchSize
+        batchXtrain = shuffledXtrain[start_index:end_index,]
+        batchYtrain = shuffledYtrain[start_index:end_index,]
+        batchXtest = shuffledXtest[start_index:end_index,]
+        batchYtest = shuffledYtest[start_index:end_index,]
+
+        t_train = np.zeros((batchYtrain.shape[0], 10), dtype=float)
+        t_train[np.arange(batchYtrain.shape[0]), batchYtrain.astype(dtype=np.int8)] = 1.0
+        t_test = np.zeros((batchYtest.shape[0], 10), dtype=float)
+        t_test[np.arange(batchYtest.shape[0]), batchYtest.astype(dtype=np.int8)] = 1.0
+
+        predictions = np.matmul(batchXtrain, weights) + bias_terms
+        m = np.max(predictions)
+        y = np.asarray(np.exp(predictions - m) / np.sum(np.exp(predictions - m), axis=1).reshape(batchXtrain.shape[0], 1))
+        logy = np.asarray(predictions - m - np.log(np.sum(np.exp(predictions - m), axis=1)).reshape(batchXtrain.shape[0], 1))
+        # y.reshape(y.shape[0], 1)
+        # update weights using gradient descent
+        diff = y - t_train
+        derived_loss = np.dot(batchXtrain.T, diff) / batchXtrain.shape[0]
+        weights -= lrate * derived_loss
+        bias_terms = bias_terms - lrate * np.sum(diff) / batchXtrain.shape[0]
+        # at the end of every epoch
+        # this could be done outside the batch loop, but it seemed cleaner this way to me,
+        # since otherwise we'd have to reinstantiate the arrays
+        if i == (Xtest.shape[0] // batchSize) - 1:
+
+            t_train = np.zeros((Ytrain.shape[0], 10))
+            t_train[np.arange(Ytrain.shape[0]), Ytrain] = 1
+            t_test = np.zeros((Ytest.shape[0], 10))
+            t_test[np.arange(Ytest.shape[0]), Ytest] = 1
+
+            # calculate predictions for entire dataset
+            predictions = np.dot(Xtrain, weights) + bias_terms
+            m = np.max(predictions)
+            y = np.asarray(
+                np.exp(predictions - m) / np.sum(np.exp(predictions - m), axis=1).reshape(Xtrain.shape[0], 1))
+            logy = np.asarray(
+                predictions - m - np.log(np.sum(np.exp(predictions - m), axis=1)).reshape(Xtrain.shape[0], 1))
+
+            # calculate predictions for entire test dataset
+            test_predictions = np.dot(Xtest, weights) + bias_terms
+            m_t = np.max(test_predictions)
+            y_test = np.asarray(
+                np.exp(test_predictions - m_t) / np.sum(np.exp(test_predictions - m_t), axis=1).reshape(Xtest.shape[0], 1))
+            logy_test = np.asarray(
+                test_predictions - m_t - np.log(np.sum(np.exp(test_predictions - m_t), axis=1)).reshape(Xtest.shape[0], 1))
+
+            training_accuracy = 100.0 * np.sum(np.argmax(y, axis=1) == np.argmax(t_train, axis=1)) / Xtrain.shape[0]
+            test_accuracy = 100.0 * np.sum(np.argmax(y_test, axis=1) == np.argmax(t_test, axis=1)) / Xtest.shape[0]
+            training_accuracies[epoch] = training_accuracy
+            test_accuracies[epoch] = test_accuracy
+
+            # print np.multiply(t_train, logy)
+            # print np.sum(np.multiply(t_train, logy), axis=1)
+            training_error = -1 * np.sum(np.sum(np.multiply(t_train, logy), axis=1)) / Xtrain.shape[0]
+            test_error = -1 * np.sum(np.sum(np.multiply(t_test, logy_test), axis=1)) / Xtest.shape[0]
+            training_losses[epoch] = training_error
+            test_losses[epoch] = test_error
+
+            print training_losses[epoch]
+            print test_losses[epoch]
+            print training_accuracies[epoch]
+            print test_accuracies[epoch]
+
+print '\nQuestion 7(d)'
+print 'Learning rate: ' + str(lrate)
+print 'Final Training Loss: ' + str(training_losses[-1])
+print 'Final Test Loss: ' + str(test_losses[-1])
+print 'Final Training Accuracy: ' + str(training_accuracies[-1])
+print 'Final Test Accuracy: ' + str(test_accuracies[-1])
+
+plt.semilogx(np.linspace(0, 500, 500), training_accuracies, c='orange')
+plt.semilogx(np.linspace(0, 500, 500), test_accuracies, c='blue')
+plt.ylim(80, 100)
+plt.xlabel('Epoch')
+plt.title('Question 7(e): training and test accuracy for stochastic gradient descent.')
+plt.ylabel('Accuracy')
+plt.show()
+
+plt.semilogx(np.linspace(0, 500, 500), training_losses, c='orange')
+plt.semilogx(np.linspace(0, 500, 500), test_losses, c='blue')
+plt.ylim(0.2, 1)
+plt.title('Question 7(f): training and test loss for stochastic gradient descent.')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.show()
+
+min_epoch = np.where(np.min(test_losses) == test_losses)[0][0]
+print '\nQuestion 7(g)'
+print 'Minimal test loss occurs at epoch #' + str(min_epoch+1)
+print 'Training Accuracy at epoch #' + str(min_epoch+1) + ': ' + str(training_accuracies[min_epoch])
+print 'Test Accuracy at epoch #' + str(min_epoch+1) + ': ' + str(test_accuracies[min_epoch])
+print 'Training Loss at epoch #' + str(min_epoch+1) + ': ' + str(training_losses[min_epoch])
+print 'Test Loss at epoch #' + str(min_epoch+1) + ': ' + str(test_losses[min_epoch])
+
